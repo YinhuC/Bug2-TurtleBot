@@ -1,0 +1,8 @@
+prefix=/home/yinhu/compsys726/install
+
+Name: python_nodes
+Description: Description of python_nodes
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 
