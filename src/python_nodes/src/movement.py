@@ -6,8 +6,8 @@ from geometry_msgs.msg import Twist, Point
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import LaserScan
 
-ANGLE_ERROR_MARGIN = 0.1
-DISTANCE_ERROR_MARGIN = 0.2
+ANGLE_ERROR_MARGIN = 0.06
+DISTANCE_ERROR_MARGIN = 0.1
 PI = 3.1415926535897
 
 
@@ -15,11 +15,8 @@ class MovementNode():
 
     # Scanner
     _regions = [
-        0,
-        0,
-        0,
-        0,
-        0,
+        5,
+        5
     ]
 
     # States
@@ -29,20 +26,27 @@ class MovementNode():
 
     # Substates
     FIX_HEADING = -10
-    GO_FORWARD = 10
-    END_STATE = 20
+    GO_FORWARD = 11
+    END_STATE = 12
+
+    GO_BACK = 20
+    FORWARD = 21
+    TURN_LEFT = 22
+    TURN_RIGHT = 23
+    CORNER = 24
 
     # Robot state
     current_state = GO_TO_GOAL
-    current_substate = FIX_HEADING
+    current_substate_goal = FIX_HEADING
+    current_substate_wall = TURN_LEFT
     current_position = Point()
     current_angle = 0
     setup = False
 
     # Destination point
     dest = Point()
-    dest.x = 10
-    dest.y = -1.6
+    dest.x = 20
+    dest.y = 0
 
     def __init__(self):
         # Initialise current node
@@ -57,31 +61,128 @@ class MovementNode():
         rospy.Subscriber("/scan", LaserScan, self.OnLaserScanCallback)
         rospy.Subscriber("/odom", Odometry, self.OdometryCallback)
 
-        r = rospy.Rate(10)
+        r = rospy.Rate(30)
 
         while not rospy.is_shutdown():
-            if self.current_substate == self.GO_TO_GOAL:
+            if self.current_state == self.GO_TO_GOAL:
                 self.GoToGoal(r)
-            elif self.current_substate == self.FOLLOW_WALL:
+            elif self.current_state == self.FOLLOW_WALL:
                 self.FollowWall(r)
+            else:
+                pass
 
     def FollowWall(self, r):
-        if self.regions[1] < 0.8:
-            self.StopTurn()
-        elif self.current_substate == self.GO_FORWARD:
-            self.GoForward()
-        elif self.current_substate == self.END_STATE:
-            self.EndState()
+        move_cmd = Twist()
+
+        while self.current_substate_wall == self.FORWARD:
+            rospy.loginfo("TurtleBot forward")
+
+            move_cmd.linear.x = 0.5
+            move_cmd.angular.z = 0.0
+
+            self.cmd_vel.publish(move_cmd)
+            r.sleep()
+
+            self.CheckChangeState()
+
+        while self.current_substate_wall == self.TURN_LEFT:
+            rospy.loginfo("TurtleBot left")
+
+            move_cmd.linear.x = 0.0
+            move_cmd.angular.z = 0.5
+
+            self.cmd_vel.publish(move_cmd)
+            r.sleep()
+
+            self.CheckChangeState()
+
+        while self.current_substate_wall == self.TURN_RIGHT:
+            rospy.loginfo("TurtleBot right")
+
+            move_cmd.linear.x = 0.0
+            move_cmd.angular.z = -0.5
+
+            self.cmd_vel.publish(move_cmd)
+            r.sleep()
+
+            self.CheckChangeState()
+
+        while self.current_substate_wall == self.GO_BACK:
+            rospy.loginfo("TurtleBot back")
+
+            move_cmd.linear.x = -0.2
+            move_cmd.angular.z = 0.0
+
+            self.cmd_vel.publish(move_cmd)
+            r.sleep()
+
+            self.CheckChangeState()
+
+        while self.current_substate_wall == self.CORNER:
+            action = 0
+            timeStart = rospy.Time.now().to_sec()
+            while action == 0:
+                rospy.loginfo("C 1")
+
+                move_cmd.linear.x = 0.5
+                move_cmd.angular.z = 0.0
+
+                self.cmd_vel.publish(move_cmd)
+                r.sleep()
+
+                timeNow = rospy.Time.now().to_sec()
+                distance_relative = 0.5*(timeNow-timeStart)
+
+                MovementNode.last_dist = distance_relative
+
+                if(distance_relative > 1.15):
+                    action = 1
+
+            timeStart = rospy.Time.now().to_sec()
+            while action == 1:
+                rospy.loginfo("C 2")
+                move_cmd.linear.x = 0.0
+                move_cmd.angular.z = -0.5
+
+                self.cmd_vel.publish(move_cmd)
+                r.sleep()
+
+                timeNow = rospy.Time.now().to_sec()
+                angle_relative = (0.5)*(timeNow-timeStart)
+
+                if(angle_relative > 90*2*PI/360):
+                    action = 2
+
+            self.current_substate_wall = self.FORWARD
+
+    def CheckChangeState(self):
+        if(math.isnan(self._regions[1]) or self._regions[1] > 0.6161) and (self._regions[0] < 1.05) \
+                and (self._regions[0] > 0.85) and (self.current_substate_wall != self.FORWARD):
+            self.current_substate_wall = self.FORWARD
+        elif(math.isnan(self._regions[1]) or self._regions[1] > 0.6161) and (self._regions[0] < 0.85) \
+                and (self.current_substate_wall != self.TURN_LEFT):
+            self.current_substate_wall = self.TURN_LEFT
+        elif(math.isnan(self._regions[1]) or self._regions[1] > 0.6161) and (self._regions[0] > 1.05) \
+                and (self.current_substate_wall != self.TURN_RIGHT):
+            self.current_substate_wall = self.TURN_RIGHT
+        elif(math.isnan(self._regions[1])) and (math.isnan(self._regions[0])):
+            self.current_substate_wall = self.CORNER
+        else:
             pass
-        r.sleep()
 
     def GoToGoal(self, r):
-        if self.current_substate == self.FIX_HEADING:
+
+        if (self._regions[1] < 0.6161) and not math.isnan(self._regions[1]):
+            self.current_state = self.FOLLOW_WALL
+            rospy.loginfo("TurtleBot now following wall")
+        elif self.current_substate_goal == self.FIX_HEADING:
             self.FixHeading()
-        elif self.current_substate == self.GO_FORWARD:
+        elif self.current_substate_goal == self.GO_FORWARD:
             self.GoForward()
-        elif self.current_substate == self.END_STATE:
+        elif self.current_substate_goal == self.END_STATE:
             self.EndState()
+        else:
+            rospy.logerr('Unkown state for GO_TO_GOAL')
             pass
         r.sleep()
 
@@ -92,12 +193,12 @@ class MovementNode():
 
         move_cmd = Twist()
         if math.fabs(angle_error) > ANGLE_ERROR_MARGIN:
-            move_cmd.angular.z = 1 if angle_error > 0 else -1
+            move_cmd.angular.z = 0.8 if angle_error > 0 else -0.8
 
         self.cmd_vel.publish(move_cmd)
 
         if math.fabs(angle_error) < ANGLE_ERROR_MARGIN:
-            self.SwitchState(self.GO_FORWARD)
+            self.current_substate_goal = self.GO_FORWARD
 
     def GoForward(self):
         desired_angle = math.atan2(
@@ -106,26 +207,15 @@ class MovementNode():
         distance_error = math.sqrt(pow(self.dest.y - self.current_position.y, 2) +
                                    pow(self.dest.x - self.current_position.x, 2))
 
-        if distance_error > DISTANCE_ERROR_MARGIN:
-            move_cmd = Twist()
-            move_cmd.linear.x = 0.6
+        move_cmd = Twist()
+        if math.fabs(angle_error) > ANGLE_ERROR_MARGIN:
+            self.current_substate_goal = self.FIX_HEADING
+        elif distance_error > DISTANCE_ERROR_MARGIN:
+            move_cmd.linear.x = 0.5
             self.cmd_vel.publish(move_cmd)
         else:
-            self.SwitchState(self.DEST)
-
-        # state change conditions
-        if math.fabs(angle_error) > ANGLE_ERROR_MARGIN:
-            self.SwitchState(self.FIX_HEADING)
-
-    def EndState(self):
-        move_cmd = Twist()
-        move_cmd.linear.x = 0
-        move_cmd.angular.z = 0
-        self.cmd_vel.publish(move_cmd)
-
-    def SwitchState(self, state):
-        self.current_substate = state
-        rospy.loginfo('State is now [%s]' % self.current_substate)
+            move_cmd.linear.x = 0.0
+            self.cmd_vel.publish(move_cmd)
 
     def OnLaserScanCallback(self, data):
         count = len(data.ranges)
