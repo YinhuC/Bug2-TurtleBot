@@ -43,10 +43,13 @@ class MovementNode():
     current_angle = 0
     setup = False
 
+    past_side_state = 0
+    past_saved_time = 0
+
     # Destination point
     dest = Point()
     dest.x = 20
-    dest.y = 0
+    dest.y = 1
 
     def __init__(self):
         # Initialise current node
@@ -74,8 +77,8 @@ class MovementNode():
     def FollowWall(self, r):
         move_cmd = Twist()
 
-        while self.current_substate_wall == self.FORWARD:
-            rospy.loginfo("TurtleBot forward")
+        while (self.current_state == self.FOLLOW_WALL) and (self.current_substate_wall == self.FORWARD):
+            #rospy.loginfo("TurtleBot forward")
 
             move_cmd.linear.x = 0.5
             move_cmd.angular.z = 0.0
@@ -85,8 +88,8 @@ class MovementNode():
 
             self.CheckChangeState()
 
-        while self.current_substate_wall == self.TURN_LEFT:
-            rospy.loginfo("TurtleBot left")
+        while (self.current_state == self.FOLLOW_WALL) and (self.current_substate_wall == self.TURN_LEFT):
+            #rospy.loginfo("TurtleBot left")
 
             move_cmd.linear.x = 0.0
             move_cmd.angular.z = 0.5
@@ -96,8 +99,8 @@ class MovementNode():
 
             self.CheckChangeState()
 
-        while self.current_substate_wall == self.TURN_RIGHT:
-            rospy.loginfo("TurtleBot right")
+        while (self.current_state == self.FOLLOW_WALL) and (self.current_substate_wall == self.TURN_RIGHT):
+            #rospy.loginfo("TurtleBot right")
 
             move_cmd.linear.x = 0.0
             move_cmd.angular.z = -0.5
@@ -107,8 +110,8 @@ class MovementNode():
 
             self.CheckChangeState()
 
-        while self.current_substate_wall == self.GO_BACK:
-            rospy.loginfo("TurtleBot back")
+        while (self.current_state == self.FOLLOW_WALL) and (self.current_substate_wall == self.GO_BACK):
+            #rospy.loginfo("TurtleBot back")
 
             move_cmd.linear.x = -0.2
             move_cmd.angular.z = 0.0
@@ -118,11 +121,11 @@ class MovementNode():
 
             self.CheckChangeState()
 
-        while self.current_substate_wall == self.CORNER:
+        while (self.current_state == self.FOLLOW_WALL) and (self.current_substate_wall == self.CORNER):
             action = 0
             timeStart = rospy.Time.now().to_sec()
             while action == 0:
-                rospy.loginfo("C 1")
+                #rospy.loginfo("C 1")
 
                 move_cmd.linear.x = 0.5
                 move_cmd.angular.z = 0.0
@@ -140,7 +143,7 @@ class MovementNode():
 
             timeStart = rospy.Time.now().to_sec()
             while action == 1:
-                rospy.loginfo("C 2")
+                #rospy.loginfo("C 2")
                 move_cmd.linear.x = 0.0
                 move_cmd.angular.z = -0.5
 
@@ -170,11 +173,21 @@ class MovementNode():
         else:
             pass
 
+        if (self.current_position.y > self.past_side_state - 0.05) and (self.current_position.y < self.past_side_state + 0.05) \
+                and ((rospy.Time.now().to_sec()-self.past_saved_time) > 5):
+            self.current_state = self.GO_TO_GOAL
+            rospy.loginfo("TurtleBot now going to goal")
+
+        p = [self.current_position.y, self.past_side_state]
+        rospy.loginfo(p)
+
     def GoToGoal(self, r):
 
         if (self._regions[1] < 0.6161) and not math.isnan(self._regions[1]):
             self.current_state = self.FOLLOW_WALL
             rospy.loginfo("TurtleBot now following wall")
+            self.past_side_state = self.current_position.y
+            self.past_saved_time = rospy.Time.now().to_sec()
         elif self.current_substate_goal == self.FIX_HEADING:
             self.FixHeading()
         elif self.current_substate_goal == self.GO_FORWARD:
@@ -224,7 +237,7 @@ class MovementNode():
             data.ranges[0],
             data.ranges[count / 2],
         ]
-        rospy.loginfo(self._regions)
+        # rospy.loginfo(self._regions)
 
     def OdometryCallback(self, data):
         # Get the position turtlebot2
