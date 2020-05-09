@@ -14,7 +14,7 @@ class LaserScanOutput():
     def OnLaserScan(self, data):
         count = len(data.ranges)
         # Assuming the middle point is directly in front of the robot
-        rospy.loginfo("Front value is %f", data.ranges[count / 2])
+        rospy.loginfo("side value is %f", data.ranges[0])
 
 
 if __name__ == '__main__':
