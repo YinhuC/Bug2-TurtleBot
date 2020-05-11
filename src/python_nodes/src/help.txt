@@ -72,9 +72,40 @@ angle_max: 0.524276316166
 1.04584419727/0.00163668883033 = 639 = 640 sensor positions
 
 
+
+
+
+pip install numpy
+sudo apt install ros-melodic-pointcloud-to-laserscan
+
+
+
+
+    memory = Point()
+    memory.x = -1
+    memory.y = -1
+    memory_time = 0
+    force = False
+
+
+
+
+        if ((rospy.Time.now().to_sec() - self.memory_time) > 2) and (self.memory.x == round(self.current_position.x, 2)) \
+                and (self.memory.y == round(self.current_position.y, 2) and (self.setup == True)):
+            self.current_substate_wall = self.CORNER
+            self.force = True
+            rospy.loginfo("FORCE")
+        elif(rospy.Time.now().to_sec() - self.memory_time) > 2:
+            self.memory.x = round(self.current_position.x, 2)
+            self.memory.y = round(self.current_position.y, 2)
+            self.memory_time = rospy.Time.now().to_sec()
+        else:
+            pass
+
         if (self.setup == False):
-            # Aim to get to other side of room
-            self.dest.x = self.current_position.x + 12
-            self.dest.y = self.current_position.y - 1
             self.dest.z = 0
             self.setup = True
+            self.memory.x = round(self.current_position.x, 2)
+            self.memory.y = round(self.current_position.y, 2)
+            self.memory_time = rospy.Time.now().to_sec()
+
