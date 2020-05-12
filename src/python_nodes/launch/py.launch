@@ -1,5 +1,5 @@
 <launch>
-    <node pkg="python_nodes" type="movement.py" name="move" output="screen" />
+    <node pkg="python_nodes" type="movement.py" name="move" output="screen" cwd="node"/>
     <node pkg="python_nodes" type="datalogging.py" name="log"  />
     <arg name="laser_height" default="0.01" /> 
     <node pkg="tf" type="static_transform_publisher" name="laser_height_offset" args="0 0 $(arg laser_height) 0 0 0 /base_link /laser_height 100" />

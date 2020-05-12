@@ -210,3 +210,5 @@ target_link_libraries(movement ${catkin_LIBRARIES})
 add_executable(datalogging src/datalogging.py)
 target_link_libraries(datalogging ${catkin_LIBRARIES})
 
+add_executable(photo src/photo.py)
+target_link_libraries(photo ${catkin_LIBRARIES})

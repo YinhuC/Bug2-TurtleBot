@@ -16,7 +16,7 @@ roslaunch my_minimal_nodes cpp.launch
 
 roslaunch python_nodes py.launch
 
-roslaunch turtlebot_gazebo turtlebot_world.launch world_file:=$PWD/worlds/example_1.world
+roslaunch turtlebot_gazebo turtlebot_world.launch world_file:=$PWD/worlds/example_2.world
 
 
 source ~/compsys726/devel/setup.bash
@@ -29,23 +29,12 @@ rosservice call /gazebo/reset_simulation "{}"
     <node name="rviz" pkg="rviz" type="rviz" args="-d $(find turtlebot_rviz_launchers)/rviz/robot.rviz" />
     <node pkg="python_nodes" type="laserscanner.py" name="laser" output="screen" />
 
+    <node pkg="python_nodes" type="photo.py" name="photo" output="log" />
 
 
 add_executable(LaserScanner src/LaserScanner.py)
 target_link_libraries(LaserScanner ${catkin_LIBRARIES})
 
-
-
->> How to install packages
-https://industrial-training-master.readthedocs.io/en/melodic/_source/session1/Installing-Existing-Packages.html
-
-   <node pkg="nodelet" type="nodelet" name="depthimage_to_laserscan_loader" args="load depthimage_to_laserscan/DepthImageToLaserScanNodelet $(arg manager)">
-        <param name="scan_height" value="10"/>
-        <param name="output_frame_id" value="/depth_camera_link"/>
-        <param name="range_min" value="0.3"/>
-        <remap from="image" to="/depth/image_raw"/>
-        <remap from="scan" to="/scan"/>
-    </node>
 
 
 
