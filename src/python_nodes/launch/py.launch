@@ -1,6 +1,7 @@
 <launch>
-    <node pkg="python_nodes" type="movement.py" name="move" output="screen" cwd="node"/>
-    <node pkg="python_nodes" type="datalogging.py" name="log"  />
+    <node pkg="python_nodes" type="takephoto.py" name="takephoto" output="screen" cwd="node"/>
+    <node pkg="python_nodes" type="movement.py" name="move" output="screen" />
+    <node pkg="python_nodes" type="statelog.py" name="log"  output="screen" />
     <arg name="laser_height" default="0.01" /> 
     <node pkg="tf" type="static_transform_publisher" name="laser_height_offset" args="0 0 $(arg laser_height) 0 0 0 /base_link /laser_height 100" />
     <node pkg="pointcloud_to_laserscan" type="pointcloud_to_laserscan_node" name="pointcloud_to_laserscan">

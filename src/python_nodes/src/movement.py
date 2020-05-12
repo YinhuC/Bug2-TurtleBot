@@ -1,11 +1,4 @@
 #! /usr/bin/env python
-from __future__ import print_function
-import sys
-import cv2
-from std_msgs.msg import String
-from sensor_msgs.msg import Image
-from cv_bridge import CvBridge, CvBridgeError
-
 import math
 import rospy
 from tf import transformations
@@ -43,7 +36,7 @@ class MovementNode():
     TURN_RIGHT = 23
     CORNER = 24
 
-    # Robot state
+    # Robot state fields and information
     current_state = GO_TO_GOAL
     current_substate_goal = FIX_HEADING
     current_substate_wall = TURN_LEFT
@@ -54,14 +47,8 @@ class MovementNode():
     past_side_state = 0
     past_trajectory_state = 0
 
-    image_received = False
-    image = None
-    image_count = 1
-
     # Destination point
     dest = Point()
-    # dest.x = 10
-    # dest.y = 0
 
     def __init__(self):
         # Initialise current node
@@ -76,11 +63,10 @@ class MovementNode():
         rospy.Subscriber("/camera/scan", LaserScan, self.OnLaserScanCallback)
         rospy.Subscriber("/odom", Odometry, self.OdometryCallback)
 
-        # Setup photo and subscribe topic
-        self.bridge = CvBridge()
-        self.image_sub = rospy.Subscriber(
-            "/camera/rgb/image_raw", Image, self.PhotoCallback)
+        # 1 second to boot all nodes
         rospy.sleep(1)
+
+        rospy.loginfo("MovementNode has initialised")
 
         # Report to ROS 30 times per second
         r = rospy.Rate(30)
@@ -106,7 +92,6 @@ class MovementNode():
 
         # This loop puts the robot into forward linear movement only
         while (self.current_state == self.FOLLOW_WALL) and (self.current_substate_wall == self.FORWARD):
-            # rospy.loginfo("FORWARD")
 
             move_cmd.linear.x = 0.5
             move_cmd.angular.z = 0.0
@@ -120,7 +105,6 @@ class MovementNode():
 
         # This loop puts the robot into positive angular movement only to turn left
         while (self.current_state == self.FOLLOW_WALL) and (self.current_substate_wall == self.TURN_LEFT):
-            # rospy.loginfo("TURN_LEFT")
 
             move_cmd.linear.x = 0.0
             move_cmd.angular.z = 0.5
@@ -133,7 +117,6 @@ class MovementNode():
 
         # This loop puts the robot into negative angular movement only to turn right
         while (self.current_state == self.FOLLOW_WALL) and (self.current_substate_wall == self.TURN_RIGHT):
-            # rospy.loginfo("TURN_RIGHT")
 
             move_cmd.linear.x = 0.0
             move_cmd.angular.z = -0.5
@@ -147,7 +130,6 @@ class MovementNode():
         # This loop puts the robot into negative linear movement only, (is not used), however,
         # may be useful in future work and for completeness
         while (self.current_state == self.FOLLOW_WALL) and (self.current_substate_wall == self.GO_BACK):
-            # rospy.loginfo("GO_BACK")
 
             move_cmd.linear.x = -0.2
             move_cmd.angular.z = 0.0
@@ -160,7 +142,6 @@ class MovementNode():
 
         # This loop allows the robot to turn tight corners when it loses both readings of the wall
         while (self.current_state == self.FOLLOW_WALL) and (self.current_substate_wall == self.CORNER):
-            # rospy.loginfo("CORNER")
 
             # Setup sub state of sub state and save time for calcualtions
             action = 0
@@ -169,7 +150,7 @@ class MovementNode():
             # This loop moves the bot a certain distance past the wall, so after the turn it won't crash into the wall
             while (action == 0) and (self.current_state == self.FOLLOW_WALL):
 
-                move_cmd.linear.x = 0.5
+                move_cmd.linear.x = 0.4
                 move_cmd.angular.z = 0.0
 
                 self.cmd_vel.publish(move_cmd)
@@ -177,7 +158,7 @@ class MovementNode():
 
                 # Calculate the relative distance moved
                 timeNow = rospy.Time.now().to_sec()
-                distance_relative = 0.5*(timeNow-timeStart)
+                distance_relative = 0.4*(timeNow-timeStart)
 
                 MovementNode.last_dist = distance_relative
 
@@ -191,14 +172,14 @@ class MovementNode():
             timeStart = rospy.Time.now().to_sec()
             while (action == 1) and (self.current_state == self.FOLLOW_WALL):
                 move_cmd.linear.x = 0.0
-                move_cmd.angular.z = -0.5
+                move_cmd.angular.z = -0.4
 
                 self.cmd_vel.publish(move_cmd)
                 r.sleep()
 
                 # Calculate the relative angle turned
                 timeNow = rospy.Time.now().to_sec()
-                angle_relative = (0.5)*(timeNow-timeStart)
+                angle_relative = (0.4)*(timeNow-timeStart)
 
                 # Check if turtlebot should be in another sub state or state
                 self.CheckGoToGoalState()
@@ -238,7 +219,6 @@ class MovementNode():
         if (self.current_position.y > self.past_side_state - 0.05) and (self.current_position.y < self.past_side_state + 0.05) \
                 and (self.current_position.x - self.past_trajectory_state > 0.7):
             self.current_state = self.GO_TO_GOAL
-            rospy.loginfo("TurtleBot now going to goal")
 
     # This method directs the bot towards the goal and consists of sub states
     def GoToGoal(self, r):
@@ -252,18 +232,6 @@ class MovementNode():
             # Save last position not folloiwing wall into memory
             self.past_side_state = self.current_position.y
             self.past_trajectory_state = self.current_position.x
-
-            # Take photo and save to current working directory
-            title = rospy.get_param(
-                '~image_title', "object_" + str(self.image_count) + ".jpg")
-            if self.TakePicture(title):
-                rospy.loginfo(
-                    "Image saved to current working directory: " + title)
-                self.image_count += 1
-            else:
-                rospy.loginfo("No images received or saved")
-
-            rospy.loginfo("TurtleBot now following wall")
 
         elif self.current_substate_goal == self.FIX_HEADING:
             # Fix heading due to angle error
@@ -301,7 +269,6 @@ class MovementNode():
         # If angle error is smaller than the threshold then change sub state to move forward
         if math.fabs(angle_error) < ANGLE_ERROR_MARGIN:
             self.current_substate_goal = self.GO_FORWARD
-            rospy.loginfo("GO_FORWARD")
 
     # This method move the robot towards the goal
     def GoForward(self):
@@ -318,9 +285,8 @@ class MovementNode():
         move_cmd = Twist()
         if math.fabs(angle_error) > ANGLE_ERROR_MARGIN:
             self.current_substate_goal = self.FIX_HEADING
-            rospy.loginfo("FIX_HEADING")
         elif distance_error > DISTANCE_ERROR_MARGIN:
-            move_cmd.linear.x = 0.5
+            move_cmd.linear.x = 0.6
             self.cmd_vel.publish(move_cmd)
         else:
             move_cmd.linear.x = 0.0
@@ -341,28 +307,6 @@ class MovementNode():
             min(data.ranges[0:369]),
             min(data.ranges[139:499]),
         ]
-        # rospy.loginfo(self._regions)
-
-    # This method takes a photo and saves it to the current working directory
-    def TakePicture(self, title):
-        if self.image_received:
-            # Save an image
-            cv2.imwrite(title, self.image)
-            return True
-        else:
-            return False
-
-    # This is the call back to convert the image to OpenCV format
-    def PhotoCallback(self, data):
-        # Convert image to OpenCV format else print error
-        try:
-            cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
-        except CvBridgeError as e:
-            print(e)
-
-        # Setup variables for image to be saved
-        self.image_received = True
-        self.image = cv_image
 
     # This method is the callback method for the odometry
     def OdometryCallback(self, data):
@@ -384,8 +328,8 @@ class MovementNode():
             data.pose.pose.orientation.y,
             data.pose.pose.orientation.z,
             data.pose.pose.orientation.w)
-        euler = transformations.euler_from_quaternion(quaternion)
-        self.current_angle = euler[2]
+        calc = transformations.euler_from_quaternion(quaternion)
+        self.current_angle = calc[2]
 
     # This method logs info that the bot has been terminated
     def Shutdown(self):
