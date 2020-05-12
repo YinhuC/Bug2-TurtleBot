@@ -1,19 +1,33 @@
+A readme.txt file that contains instructions on how to build and run the project.
 
-mkdir –p src
-catkin_make
-source devel/setup.bash
-cd ~/compsys726/src
-
->>>>>> Start
-    >>>>>> Installation
+>>>>>> Installation: Run these in terminal to install packacges
+    sudo apt update
+    sudo apt install python3-pip
     pip install numpy
+    pip install opencv-python
     sudo apt install ros-melodic-pointcloud-to-laserscan
 
-    >>>>>> To launch gazebo and turtlebot in random world
-    roslaunch turtlebot_gazebo turtlebot_world.launch
+>>>>>> Create catkin workspace: run these in terminal in home directory
+    mkdir compsys726
+    cd compsys726
+    mkdir src
+    catkin_make
 
-    >>>>>> To launch rviz to see laserscanners and other properties
-    roslaunch turtlebot_rviz_launchers view_robot.launch
+>>>>>> Copy the python_nodes folder into the src folder ~/compsys726/src/
+>>>>>> Then run these in terminal
+    chmod +x ~/compsys726/src/python_nodes/src/movement.py
+    chmod +x ~/compsys726/src/python_nodes/src/takephoto.py
+    chmod +x ~/compsys726/src/python_nodes/src/statelog.py
+    chmod +x ~/compsys726/src/python_nodes/src/help.py
 
-    >>>>>> To launch keyboard controls to move turtlebot
-    roslaunch turtlebot_teleop keyboard_teleop.launch
+>>>>>> Navigate to the folder and source using these commands in terminal:
+    cd ~/compsys726/src
+    source ~/compsys726/devel/setup.bash
+
+>>>>>> Start World: NOTE: I had the world files in a worlds folder which was located in the home directory
+    roslaunch turtlebot_gazebo turtlebot_world.launch world_file:=$PWD/worlds/example_1.world
+    >>> OR
+    roslaunch turtlebot_gazebo turtlebot_world.launch world_file:=$PWD/worlds/example_2.world
+
+>>>>>> Launch the implemented nodes
+    roslaunch python_nodes py.launch

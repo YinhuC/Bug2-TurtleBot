@@ -242,7 +242,6 @@ class MovementNode():
         elif self.current_substate_goal == self.END_STATE:
             self.EndState()
         else:
-            rospy.logerr('Unkown state for GO_TO_GOAL')
             pass
         r.sleep()
 

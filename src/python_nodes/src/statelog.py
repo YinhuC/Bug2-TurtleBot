@@ -81,6 +81,9 @@ class StateLog():
         elif(self.last_state != self.current_state) and (self.current_state == self.FOLLOW_WALL):
             rospy.loginfo("Bot changed state: FOLLOW_WALL")
 
+        elif(self.current_state != self.GO_TO_GOAL) and (self.current_state != self.FOLLOW_WALL):
+            rospy.logerr('Bot has entered unkown state')
+
         else:
             pass
 
@@ -93,6 +96,9 @@ class StateLog():
 
         elif(self.last_substate_goal != self.current_substate_goal) and (self.current_substate_goal == self.END_STATE):
             rospy.loginfo("Bot changed GO_TO_GOAL sub state: END_STATE")
+
+        elif(self.current_substate_goal != self.GO_FORWARD) and (self.current_substate_goal != self.END_STATE) and (self.current_substate_goal != self.FIX_HEADING):
+            rospy.logerr('Bot has entered unkown state')
 
         else:
             pass
@@ -109,6 +115,10 @@ class StateLog():
 
         elif(self.last_substate_wall != self.current_substate_wall) and (self.current_substate_wall == self.CORNER):
             rospy.loginfo("Bot changed FOLLOW_WALL sub state: CORNER")
+
+        elif(self.last_substate_wall != self.FORWARD) and (self.last_substate_wall != self.TURN_LEFT) and \
+                (self.last_substate_wall != self.TURN_RIGHT) and (self.last_substate_wall != self.CORNER):
+            rospy.logerr('Bot has entered unkown state')
 
         else:
             pass

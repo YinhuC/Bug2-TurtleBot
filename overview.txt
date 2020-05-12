@@ -1,0 +1,44 @@
+An overview.txt file that contains a description of the components (nodes) in the system and what each node does.
+
+>>> Pointcloud to Laserscan Node | tf(transformation) Node | Laser height argument
+This node is an external package installed to convert Pointcloud to Laserscan.
+This was added as I could find no way to adjust the height of the Laserscan the turtlebot
+provided in the /scan. There is a transformation node which takes the laser height
+argument to lower the laser height to 0.01m (1cm) above the ground (or lower limit). 
+The Pointcloud to Laserscan node then uses this laser height in the target_grame
+parameter. This also uses many other parameters to match the Laserscan, apart from the
+height. This remaps from /scan to /camera/scan and is used in the Movement node and
+StateLog Node.
+
+>>> Movement Node
+The movement node, which is in the file movement.py contains the instructions which
+direct the turtlebot. The movement node contains the bug 2 algorithm which is run
+so the turtlebot is able to move in a straight line from one side of an area to the 
+other. The algorithm allows the robot to also safely navigate around them and return 
+to the original path. This node is subscribed to Laserscan, Odometry topics, 
+and publishes to the Twist topic. I separated the photo taking and logging
+functionality from this node due to the separation of concerns, readability and
+maintainability.
+
+>>> StateLog Node
+The StateLog node constantly keeps track of the states of the turtlebot just like the
+Movement Node. Whenever the state changes, either GO_TO_GOAL or FOLLOW_WALL, then it
+is logged on the console and to rospy.info. Whenever the sub state changes, it is also
+logged into on the console and to rospy.info. When an unknown state is entered, then
+an error is logged to rospy.error. This node is also subscribed to the Twist and
+Laserscan topics. This node can also log the laserscan readings which the turtlebot is
+using if uncommented.
+
+>>> TakePhoto Node
+This node takes a similar approach to StateLog node to keep track of the state of the 
+turtelbot. It uses the movements from the Twist topic when the turtebot has changed
+from GO_TO_GOAL to FOLLOW_WALL then it will take a photo, as this is when the turtlebot
+encounters an object. The images are saved to the current working directory. There is
+duplicated code. However, the concerns are separated. With more time, future work can 
+be to create custom messages and services to reduce duplicated code.
+
+There are assumptions which are made, such as the turtlebot starting at a
+coordinate similar to the example worlds. The robot is also mostly implemented to move
+towards a postive x direction similiar to the example worlds. However, in the Odometry
+callback function in the movement node, this can be changed by adding and subtracting
+from the destination x and y variables, though some functionality might not work.
