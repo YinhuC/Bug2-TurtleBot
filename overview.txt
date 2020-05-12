@@ -42,3 +42,7 @@ coordinate similar to the example worlds. The robot is also mostly implemented t
 towards a postive x direction similiar to the example worlds. However, in the Odometry
 callback function in the movement node, this can be changed by adding and subtracting
 from the destination x and y variables, though some functionality might not work.
+
+Note: The robot will go around the entire room if the door is located on the right side 
+(on the wall on the other side) due to the follow right side side of wall by turning 
+left rule.

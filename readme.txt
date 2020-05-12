@@ -1,4 +1,5 @@
 A readme.txt file that contains instructions on how to build and run the project.
+Read overview before launching due to notes and assumptions made.
 
 >>>>>> Installation: Run these in terminal to install packacges
 sudo apt update
