@@ -1,0 +1,20 @@
+<launch>
+    <node pkg="python_nodes" type="takephoto.py" name="takephoto" output="screen" cwd="node"/>
+    <node pkg="python_nodes" type="movement.py" name="move" output="screen" />
+    <node pkg="python_nodes" type="statelog.py" name="log"  output="screen" />
+    <arg name="laser_height" default="0.01" /> 
+    <node pkg="tf" type="static_transform_publisher" name="laser_height_offset" args="0 0 $(arg laser_height) 0 0 0 /base_link /laser_height 100" />
+    <node pkg="pointcloud_to_laserscan" type="pointcloud_to_laserscan_node" name="pointcloud_to_laserscan">
+        <remap from="cloud_in" to="/camera/depth/points"/>
+        <remap from="scan" to="/camera/scan" />
+        <rosparam>
+        target_frame: laser_height
+        angle_min: -0.521567881107
+        angle_max: 0.524276316166
+        angle_increment: 0.00163668883033
+        scan_time: 0.0329999998212
+        range_min: 0.449999988079
+        range_max: 10.0
+        </rosparam>
+    </node>
+</launch>

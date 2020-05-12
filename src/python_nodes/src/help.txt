@@ -1,0 +1,105 @@
+>>>>>> A txt I used for implementation and pasted everything into
+
+mkdir –p src
+catkin_make
+source devel/setup.bash
+cd ~/compsys726/src
+
+>>>>>> Start
+    >>>>>> Installation
+    pip install numpy
+    sudo apt install ros-melodic-pointcloud-to-laserscan
+
+    >>>>>> To launch gazebo and turtlebot in random world
+    roslaunch turtlebot_gazebo turtlebot_world.launch
+
+    >>>>>> To launch rviz to see laserscanners and other properties
+    roslaunch turtlebot_rviz_launchers view_robot.launch
+
+    >>>>>> To launch keyboard controls to move turtlebot
+    roslaunch turtlebot_teleop keyboard_teleop.launch
+
+    >>>>>> Add this optional node to launch file to launch rviz when launch file is called
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find turtlebot_rviz_launchers)/rviz/robot.rviz" />
+
+    >>>>>> Paste into terminal to reset simulation: HOWEVER - does not reset coordinate system or objects into original start up positions
+    rosservice call /gazebo/reset_simulation "{}"
+
+
+
+>>>>>> To launch world 1 or 2 and implemented nodes
+    roslaunch turtlebot_gazebo turtlebot_world.launch world_file:=$PWD/worlds/example_1.world
+    >>> OR 
+    roslaunch turtlebot_gazebo turtlebot_world.launch world_file:=$PWD/worlds/example_2.world
+
+    >>>>>> To launch implemented python nodes
+    cd ~/compsys726/src
+    source ~/compsys726/devel/setup.bash
+    roslaunch python_nodes py.launch
+
+    chmod +x laserscanlogging.py
+
+
+  source ~/compsys726/devel/setup.bash
+  roscd python_nodes/src
+  chmod +x laserscanlogging.py
+  rosrun python_nodes laserscanlogging.py
+
+
+
+
+
+
+
+>>>>>> Laserscannner information
+  header: 
+    seq: 1131
+    stamp: 
+      secs: 916
+      nsecs: 500000000
+    frame_id: "camera_depth_frame"
+  angle_min: -0.521567881107
+  angle_max: 0.524276316166
+  angle_increment: 0.00163668883033
+  time_increment: 0.0
+  scan_time: 0.0329999998212
+  range_min: 0.449999988079
+  range_max: 10.0
+
+  >>>>>> Calculations
+  1.04584419727 radians = 60 degrees
+  1.04584419727/0.00163668883033 = 639 = 640 sensor positions
+
+
+
+
+
+
+>>>>>> Possible  Future Work
+
+    memory = Point()
+    memory.x = -1
+    memory.y = -1
+    memory_time = 0
+    force = False
+
+        if ((rospy.Time.now().to_sec() - self.memory_time) > 2) and (self.memory.x == round(self.current_position.x, 2)) \
+                and (self.memory.y == round(self.current_position.y, 2) and (self.setup == True)):
+            self.current_substate_wall = self.CORNER
+            self.force = True
+            rospy.loginfo("FORCE")
+        elif(rospy.Time.now().to_sec() - self.memory_time) > 2:
+            self.memory.x = round(self.current_position.x, 2)
+            self.memory.y = round(self.current_position.y, 2)
+            self.memory_time = rospy.Time.now().to_sec()
+        else:
+            pass
+
+        if (self.setup == False):
+            self.dest.z = 0
+            self.setup = True
+            self.memory.x = round(self.current_position.x, 2)
+            self.memory.y = round(self.current_position.y, 2)
+            self.memory_time = rospy.Time.now().to_sec()
+
+    Can refactor, add custom messages with more time => will reduce duplicated code.
