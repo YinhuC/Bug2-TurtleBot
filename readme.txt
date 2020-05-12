@@ -25,7 +25,7 @@ chmod +x ~/compsys726/src/python_nodes/src/help.py
 cd ~/compsys726/src
 source ~/compsys726/devel/setup.bash
 
->>>>>> Start World: NOTE: I had the world files in a worlds folder which was located in the home directory
+>>>>>> Start World in a different terminal: NOTE: I had the world files in a worlds folder which was located in the home directory
 roslaunch turtlebot_gazebo turtlebot_world.launch world_file:=$PWD/worlds/example_1.world
     >>> OR
 roslaunch turtlebot_gazebo turtlebot_world.launch world_file:=$PWD/worlds/example_2.world
