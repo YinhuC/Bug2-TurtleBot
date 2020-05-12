@@ -74,6 +74,7 @@ class StateLog():
     # Log state change if state has changed
     def LogStateChange(self):
 
+        # Compare last state to current state, log the state change if one has occured
         if (self.last_state != self.current_state) and (self.current_state == self.GO_TO_GOAL):
             rospy.loginfo("Bot changed state: GO_TO_GOAL")
 
@@ -83,6 +84,7 @@ class StateLog():
         else:
             pass
 
+        # Compare last sub state to sub current state of 'GO_TO_GOAL', log the state change if one has occured
         if (self.last_substate_goal != self.current_substate_goal) and (self.current_substate_goal == self.FIX_HEADING):
             rospy.loginfo("Bot changed GO_TO_GOAL sub state: FIX_HEADING")
 
@@ -95,6 +97,7 @@ class StateLog():
         else:
             pass
 
+        # Compare last sub state to sub current state of 'FOLLOW_WALL', log the state change if one has occured
         if (self.last_substate_wall != self.current_substate_wall) and (self.current_substate_wall == self.FORWARD):
             rospy.loginfo("Bot changed FOLLOW_WALL sub state: FORWARD")
 
@@ -112,6 +115,9 @@ class StateLog():
 
     # Change state changes according to movements
     def AssignState(self):
+
+        # Compare movements to determine which state. Save current state as last state,
+        # then save new state as current state for both sub states and state
         if (self.last_x == 0.6) or (abs(self.last_z) == 0.8):
             self.last_state = self.current_state
             self.current_state = self.GO_TO_GOAL

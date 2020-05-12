@@ -89,6 +89,9 @@ class TakePhoto:
 
     # Change state changes according to movements
     def AssignState(self):
+
+        # Compare movements to determine which state. Save current state as last state,
+        # then save new state as current state for both sub states and states
         if (self.last_x == 0.6) or (abs(self.last_z) == 0.8):
             self.last_state = self.current_state
             self.current_state = self.GO_TO_GOAL
@@ -142,6 +145,7 @@ class TakePhoto:
         self.image_received = True
         self.image = cv_image
 
+    # Save movement infromation and then do checks/take picture
     def MovementCallback(self, data):
         self.last_x = data.linear.x
         self.last_z = data.angular.z
