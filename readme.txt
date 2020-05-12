@@ -32,3 +32,5 @@ roslaunch turtlebot_gazebo turtlebot_world.launch world_file:=$PWD/worlds/exampl
 
 >>>>>> Launch the implemented nodes
 roslaunch python_nodes py.launch
+
+The images of the objects are saved to ~/compsys726/src/python_nodes/src/ which is the current workling directory
